@@ -1,4 +1,7 @@
+import path from "path";
+import mime from "mime";
 import SpotifyWebApi from "spotify-web-api-node";
+import walk from "walkdir";
 
 async function wrapper(api: SpotifyWebApi) {
   try {
@@ -11,7 +14,7 @@ async function wrapper(api: SpotifyWebApi) {
 }
 
 async function migrate(api: SpotifyWebApi) {
-  const localFiles = ["Metrik - Freefall VIP"];
+  const localFiles = await getLocalFiles(process.env.LOCAL_DIR);
 
   for (const localFile of localFiles) {
     const result = await api.searchTracks(localFile);
@@ -31,6 +34,19 @@ async function migrate(api: SpotifyWebApi) {
 
   console.log("✅ Done");
   process.exit(0);
+}
+
+async function getLocalFiles(dirPath: string): Promise<string[]> {
+  const result = await walk.async(dirPath);
+  return result
+    .filter((filePath) => {
+      const mimeType = mime.getType(filePath);
+      return mimeType && mimeType.startsWith("audio/");
+    })
+    .map((filePath) => {
+      const { name } = path.parse(filePath);
+      return name; // basename without extension
+    });
 }
 
 export { wrapper as migrate };
