@@ -3,17 +3,7 @@ import mime from "mime";
 import SpotifyWebApi from "spotify-web-api-node";
 import walk from "walkdir";
 
-async function wrapper(api: SpotifyWebApi) {
-  try {
-    await migrate(api);
-  } catch (e) {
-    console.error(`An error occured: ${e.message}`);
-    console.trace();
-    process.exit(1);
-  }
-}
-
-async function migrate(api: SpotifyWebApi) {
+export async function migrate(api: SpotifyWebApi) {
   const localFiles = await getLocalFiles(process.env.LOCAL_DIR);
 
   for (const localFile of localFiles) {
@@ -37,7 +27,9 @@ async function migrate(api: SpotifyWebApi) {
 }
 
 async function getLocalFiles(dirPath: string): Promise<string[]> {
-  const result = await walk.async(dirPath);
+  const result = await walk.async(path.resolve(dirPath), {
+    follow_symlinks: true,
+  });
   return result
     .filter((filePath) => {
       const mimeType = mime.getType(filePath);
@@ -48,5 +40,3 @@ async function getLocalFiles(dirPath: string): Promise<string[]> {
       return name; // basename without extension
     });
 }
-
-export { wrapper as migrate };

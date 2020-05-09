@@ -34,25 +34,24 @@ app.get("/callback", async (req, res) => {
   }
   console.info("Got authorization code from callback");
   await getTokenFromCode(code);
-  migrate(api);
+  start();
   res.sendStatus(200);
 });
 app.listen(port);
 
 if (getTokenFromLocalStorage()) {
-  migrate(api);
+  start();
 } else {
   console.log(`🙋 Log in here:\n${api.createAuthorizeURL(scopes, "whatever")}`);
 }
 
 async function getTokenFromCode(code: string) {
   const { body } = await api.authorizationCodeGrant(code);
-  const accessToken = body["access_token"];
-  const refreshToken = body["refresh_token"];
-  localStorage.setItem("access_token", accessToken);
-  localStorage.setItem("refresh_token", refreshToken);
-  api.setAccessToken(accessToken);
-  api.setRefreshToken(refreshToken);
+  const { access_token, refresh_token } = body;
+  localStorage.setItem("access_token", access_token);
+  localStorage.setItem("refresh_token", refresh_token);
+  api.setAccessToken(access_token);
+  api.setRefreshToken(refresh_token);
 }
 
 function getTokenFromLocalStorage(): boolean {
@@ -67,4 +66,24 @@ function getTokenFromLocalStorage(): boolean {
   }
 
   return false;
+}
+
+async function start() {
+  try {
+    await migrate(api);
+  } catch (e) {
+    if (e.statusCode === 401) {
+      // Got "Unauthorized" response, access token has probably expired
+      const { body } = await api.refreshAccessToken();
+      const { access_token } = body;
+      localStorage.setItem("access_token", access_token);
+      api.setAccessToken(access_token);
+      console.info("🔄 Refreshed access token");
+      start(); // restart
+    } else {
+      console.error(`An error occured: ${e.message}`);
+      console.trace();
+      process.exit(1);
+    }
+  }
 }
