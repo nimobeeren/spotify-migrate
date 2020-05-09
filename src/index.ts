@@ -42,7 +42,7 @@ app.listen(port);
 if (getTokenFromLocalStorage()) {
   start();
 } else {
-  console.log(
+  console.info(
     `🙋 Please allow this app to access your account:\n${api.createAuthorizeURL(
       scopes,
       "whatever"
@@ -87,7 +87,7 @@ async function start() {
       start(); // restart
     } else {
       console.error(`🚨 An error occured: ${e.message}`);
-      console.trace();
+      console.error(e.stack);
       process.exit(1);
     }
   }
