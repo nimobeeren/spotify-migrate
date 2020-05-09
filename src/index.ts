@@ -32,7 +32,7 @@ app.get("/callback", async (req, res) => {
     res.status(500).send(`Got invalid code: ${code}`);
     return;
   }
-  console.info("Got authorization code from callback");
+  console.info("🆗 Got authorization code from callback");
   await getTokenFromCode(code);
   start();
   res.sendStatus(200);
@@ -42,7 +42,12 @@ app.listen(port);
 if (getTokenFromLocalStorage()) {
   start();
 } else {
-  console.log(`🙋 Log in here:\n${api.createAuthorizeURL(scopes, "whatever")}`);
+  console.log(
+    `🙋 Please allow this app to access your account:\n${api.createAuthorizeURL(
+      scopes,
+      "whatever"
+    )}`
+  );
 }
 
 async function getTokenFromCode(code: string) {
@@ -59,7 +64,7 @@ function getTokenFromLocalStorage(): boolean {
   const refreshToken = localStorage.getItem("refresh_token");
 
   if (accessToken && refreshToken) {
-    console.info("Got credentials from local storage");
+    console.info("🆗 Got credentials from local storage");
     api.setAccessToken(accessToken);
     api.setRefreshToken(refreshToken);
     return true;
@@ -81,7 +86,7 @@ async function start() {
       console.info("🔄 Refreshed access token");
       start(); // restart
     } else {
-      console.error(`An error occured: ${e.message}`);
+      console.error(`🚨 An error occured: ${e.message}`);
       console.trace();
       process.exit(1);
     }

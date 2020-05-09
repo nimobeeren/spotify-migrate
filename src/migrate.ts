@@ -22,7 +22,7 @@ export async function migrate(api: SpotifyWebApi) {
     console.log(`Added: ${displayName}`);
   }
 
-  console.log("✅ Done");
+  console.info("✅ Done");
   process.exit(0);
 }
 
