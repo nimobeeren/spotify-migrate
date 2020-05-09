@@ -31,7 +31,20 @@ app.get("/callback", async (req, res) => {
     res.status(500).send(`Got invalid code: ${code}`);
     return;
   }
-  console.info("Got credentials from callback");
+  console.info("Got authorization code from callback");
+  getTokenFromCode(code);
+  doStuff();
+  res.sendStatus(200);
+});
+app.listen(port);
+
+if (getTokenFromLocalStorage()) {
+  doStuff();
+} else {
+  console.log(`🙋 Log in here:\n${api.createAuthorizeURL(scopes, "whatever")}`);
+}
+
+async function getTokenFromCode(code: string) {
   const { body } = await api.authorizationCodeGrant(code);
   const accessToken = body["access_token"];
   const refreshToken = body["refresh_token"];
@@ -39,20 +52,20 @@ app.get("/callback", async (req, res) => {
   localStorage.setItem("refresh_token", refreshToken);
   api.setAccessToken(accessToken);
   api.setRefreshToken(refreshToken);
-  doStuff();
-  res.sendStatus(200);
-});
-app.listen(port);
+}
 
-const accessToken = localStorage.getItem("access_token");
-const refreshToken = localStorage.getItem("refresh_token");
-if (accessToken && refreshToken) {
-  console.info("Got credentials from local storage");
-  api.setAccessToken(accessToken);
-  api.setRefreshToken(refreshToken);
-  doStuff();
-} else {
-  console.log(`🙋 Log in here:\n${api.createAuthorizeURL(scopes, "whatever")}`);
+function getTokenFromLocalStorage(): boolean {
+  const accessToken = localStorage.getItem("access_token");
+  const refreshToken = localStorage.getItem("refresh_token");
+
+  if (accessToken && refreshToken) {
+    console.info("Got credentials from local storage");
+    api.setAccessToken(accessToken);
+    api.setRefreshToken(refreshToken);
+    return true;
+  }
+
+  return false;
 }
 
 async function doStuff() {
