@@ -11,8 +11,26 @@ async function wrapper(api: SpotifyWebApi) {
 }
 
 async function migrate(api: SpotifyWebApi) {
-  const artist = await api.getArtist("6r54QO0889i9vqaeuruUSn");
-  console.log(artist.body.name);
+  const localFiles = ["Metrik - Freefall VIP"];
+
+  for (const localFile of localFiles) {
+    const result = await api.searchTracks(localFile);
+    const track = result.body.tracks?.items[0];
+    const displayName = `${track.artists[0].name} - ${track.name}`;
+    console.log(`Found: ${displayName}`);
+
+    const exists = (await api.containsMySavedTracks([track.id])).body[0];
+    if (exists) {
+      console.log(`Already exists: ${displayName}`);
+      continue;
+    }
+
+    await api.addToMySavedTracks([track.id]);
+    console.log(`Added: ${displayName}`);
+  }
+
+  console.log("✅ Done");
+  process.exit(0);
 }
 
 export { wrapper as migrate };
