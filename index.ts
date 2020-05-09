@@ -2,11 +2,12 @@ import dotenv from "dotenv";
 import express from "express";
 import SpotifyWebApi from "spotify-web-api-node";
 import { LocalStorage } from "node-localstorage";
+import { migrate } from "./migrate";
 
 dotenv.config();
 
 const port = process.env.PORT || 8000;
-const scopes = ["user-read-private"];
+const scopes = ["user-library-read", "user-library-modify"];
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 // URI must be whitelisted in Spotify API settings
@@ -32,14 +33,14 @@ app.get("/callback", async (req, res) => {
     return;
   }
   console.info("Got authorization code from callback");
-  getTokenFromCode(code);
-  doStuff();
+  await getTokenFromCode(code);
+  migrate(api);
   res.sendStatus(200);
 });
 app.listen(port);
 
 if (getTokenFromLocalStorage()) {
-  doStuff();
+  migrate(api);
 } else {
   console.log(`🙋 Log in here:\n${api.createAuthorizeURL(scopes, "whatever")}`);
 }
@@ -66,8 +67,4 @@ function getTokenFromLocalStorage(): boolean {
   }
 
   return false;
-}
-
-async function doStuff() {
-  console.log("doing api stuff");
 }
