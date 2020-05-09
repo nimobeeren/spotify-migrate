@@ -4,13 +4,17 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node index.ts"
+    "start": "ts-node index.ts",
+    "start:dbg": "node -r ts-node/register --inspect-brk index.ts"
   },
   "dependencies": {
+    "@types/express": "^4.17.6",
+    "@types/node": "^13.13.5",
+    "@types/spotify-web-api-node": "^4.0.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
     "spotify-web-api-node": "^4.0.0",
-    "ts-node": "^8.10.1"
-  },
-  "devDependencies": {
+    "ts-node": "^8.10.1",
     "typescript": "^3.8.3"
   }
 }
