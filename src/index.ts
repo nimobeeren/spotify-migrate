@@ -13,7 +13,7 @@ const clientSecret = process.env.CLIENT_SECRET;
 // URI must be whitelisted in Spotify API settings
 const redirectUri = `http://localhost:${port}/callback`;
 
-const localStorage = new LocalStorage("./credentials");
+const localStorage = new LocalStorage("../credentials");
 
 const api = new SpotifyWebApi({
   clientId,
