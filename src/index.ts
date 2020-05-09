@@ -42,12 +42,8 @@ app.listen(port);
 if (getTokenFromLocalStorage()) {
   start();
 } else {
-  console.info(
-    `🙋 Please allow this app to access your account:\n${api.createAuthorizeURL(
-      scopes,
-      "whatever"
-    )}`
-  );
+  const authUrl = api.createAuthorizeURL(scopes, "whatever");
+  console.info(`🙋 Please allow this app to access your account:\n${authUrl}`);
 }
 
 async function getTokenFromCode(code: string) {
@@ -83,10 +79,10 @@ async function start() {
       const { access_token } = body;
       localStorage.setItem("access_token", access_token);
       api.setAccessToken(access_token);
-      console.info("🔄 Refreshed access token");
+      console.info("💧 Refreshed access token");
       start(); // restart
     } else {
-      console.error(`🚨 An error occured: ${e.message}`);
+      console.error(`\n🚨 An error occured: ${e.message}`);
       console.error(e.stack);
       process.exit(1);
     }
