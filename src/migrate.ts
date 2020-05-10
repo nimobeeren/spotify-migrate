@@ -1,11 +1,11 @@
 import path from "path";
 import compareStrings from "damerau-levenshtein";
+import glob from "fast-glob";
 import mime from "mime";
 import * as musicMetadata from "music-metadata";
 import { prompt } from "inquirer";
 import ora from "ora";
 import SpotifyWebApi from "spotify-web-api-node";
-import walk from "walkdir";
 
 interface State {
   notAvailable: string[];
@@ -23,6 +23,8 @@ interface Track {
 }
 
 export async function migrate(api: SpotifyWebApi) {
+  // TODO: check if access token is expired
+
   const localFiles = await getLocalFiles(process.env.LOCAL_DIR);
 
   const state: State = {
@@ -65,9 +67,9 @@ async function getLocalFiles(dirPath?: string): Promise<string[]> {
   }
 
   const spinner = ora("Reading local files").start();
-  // TODO: support ignore glob
-  const allFiles = await walk.async(path.resolve(dirPath), {
-    follow_symlinks: true,
+  const allFiles = await glob("**/*", {
+    cwd: path.resolve(dirPath),
+    ignore: process.env.IGNORE_GLOB ? [process.env.IGNORE_GLOB] : [],
   });
 
   let audioFiles: string[] = [];
