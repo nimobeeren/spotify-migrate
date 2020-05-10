@@ -9,6 +9,7 @@ import ora from "ora";
 import SpotifyWebApi from "spotify-web-api-node";
 
 interface State {
+  localFiles: string[];
   notAvailable: string[];
   alreadyExists: string[];
   ready: Track[];
@@ -24,14 +25,16 @@ interface Track {
 }
 
 export async function migrate(api: SpotifyWebApi) {
-  const localFiles = await getLocalFiles(process.env.LOCAL_DIR);
-
   const state: State = {
+    localFiles: [],
     notAvailable: [],
     alreadyExists: [],
     ready: [],
     done: [],
   };
+
+  const localFiles = await getLocalFiles(process.env.LOCAL_DIR);
+  state.localFiles = localFiles;
 
   let spinner = ora().start();
   for (let i = 0; i < localFiles.length; i++) {
@@ -139,7 +142,7 @@ async function reportBeforeMigration(state: State) {
     console.info(`❌ ${state.notAvailable.length} tracks not available`);
   }
   if (state.alreadyExists.length > 0) {
-    console.info(`⏩ ${state.alreadyExists.length} tracks already exist`);
+    console.info(`⏭ ${state.alreadyExists.length} tracks already exist`);
   }
   if (state.ready.length > 0) {
     console.info(`🔜 ${state.ready.length} tracks ready to be migrated`);
