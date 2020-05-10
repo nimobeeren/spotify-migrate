@@ -33,13 +33,15 @@ export async function migrate(api: SpotifyWebApi) {
     done: [],
   };
 
-  for (const localFile of localFiles.slice(0, 100)) {
-    const result = await api.searchTracks(localFile);
+  let spinner = ora().start();
+  for (let i = 0; i < localFiles.length; i++) {
+    spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
+    const result = await api.searchTracks(localFiles[i]);
     const track = result.body.tracks?.items[0];
     const displayName = `${track?.artists[0].name} - ${track?.name}`;
 
-    if (!track || !isCorrectTrack(displayName, localFile)) {
-      state.notAvailable.push(localFile);
+    if (!track || !isCorrectTrack(displayName, localFiles[i])) {
+      state.notAvailable.push(localFiles[i]);
       continue;
     }
 
@@ -51,6 +53,7 @@ export async function migrate(api: SpotifyWebApi) {
 
     state.ready.push(track);
   }
+  spinner.succeed(`Searched for ${localFiles.length} tracks`);
 
   await reportBeforeMigration(state);
 
@@ -66,7 +69,7 @@ export async function migrate(api: SpotifyWebApi) {
     process.exit(0);
   }
 
-  const spinner = ora(`Migrating 0 of ${state.ready.length} tracks`).start();
+  spinner = ora(`Migrating 0 of ${state.ready.length} tracks`).start();
   const trackChunks = _.chunk(state.ready, 50); // 50 tracks per request
   for (const trackChunk of trackChunks) {
     api.addToMySavedTracks(trackChunk.map((track) => track.id));
