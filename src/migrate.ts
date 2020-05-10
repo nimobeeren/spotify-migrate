@@ -1,16 +1,17 @@
 import path from "path";
 import compareStrings from "damerau-levenshtein";
 import glob from "fast-glob";
+import { prompt } from "inquirer";
+import _ from "lodash";
 import mime from "mime";
 import * as musicMetadata from "music-metadata";
-import { prompt } from "inquirer";
 import ora from "ora";
 import SpotifyWebApi from "spotify-web-api-node";
 
 interface State {
   notAvailable: string[];
   alreadyExists: string[];
-  waiting: Track[];
+  ready: Track[];
   done: Track[];
 }
 
@@ -28,11 +29,11 @@ export async function migrate(api: SpotifyWebApi) {
   const state: State = {
     notAvailable: [],
     alreadyExists: [],
-    waiting: [],
+    ready: [],
     done: [],
   };
 
-  for (const localFile of localFiles) {
+  for (const localFile of localFiles.slice(0, 100)) {
     const result = await api.searchTracks(localFile);
     const track = result.body.tracks?.items[0];
     const displayName = `${track?.artists[0].name} - ${track?.name}`;
@@ -48,14 +49,34 @@ export async function migrate(api: SpotifyWebApi) {
       continue;
     }
 
-    state.waiting.push(track);
+    state.ready.push(track);
   }
 
   await reportBeforeMigration(state);
 
-  // TODO add files to library
+  const { cont } = await prompt({
+    name: "cont",
+    type: "confirm",
+    message: "Continue?",
+    default: false,
+  });
 
-  console.info("✅ Done");
+  if (!cont) {
+    console.info("❌ Aborted");
+    process.exit(0);
+  }
+
+  const spinner = ora(`Migrating 0 of ${state.ready.length} tracks`).start();
+  const trackChunks = _.chunk(state.ready, 50); // 50 tracks per request
+  for (const trackChunk of trackChunks) {
+    api.addToMySavedTracks(trackChunk.map((track) => track.id));
+    state.done.push(...trackChunk);
+    spinner.text = `Migrating ${state.done.length} of ${state.ready.length} tracks`;
+  }
+
+  spinner.succeed(`Migrated ${state.done.length} tracks`);
+  // TODO: report
+
   process.exit(0);
 }
 
@@ -117,8 +138,8 @@ async function reportBeforeMigration(state: State) {
   if (state.alreadyExists.length > 0) {
     console.info(`⏩ ${state.alreadyExists.length} tracks already exist`);
   }
-  if (state.waiting.length > 0) {
-    console.info(`🔜 ${state.waiting.length} tracks ready to be migrated`);
+  if (state.ready.length > 0) {
+    console.info(`🔜 ${state.ready.length} tracks ready to be migrated`);
   } else {
     console.info(`🔚 no tracks left to be migrated`);
   }
@@ -142,9 +163,9 @@ async function reportBeforeMigration(state: State) {
         console.info(`* ${trackName}`);
       }
     }
-    if (state.waiting.length > 0) {
+    if (state.ready.length > 0) {
       console.info("🔜 Tracks ready to be migrated:");
-      for (const track of state.waiting) {
+      for (const track of state.ready) {
         console.info(`* ${track.artists[0].name} - ${track.name}`);
       }
     }
