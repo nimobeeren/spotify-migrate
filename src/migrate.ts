@@ -12,8 +12,8 @@ interface State {
   localFiles: string[];
   notAvailable: string[];
   alreadyExists: string[];
-  ready: Track[];
-  done: Track[];
+  ready: SpotifyApi.TrackObjectFull[];
+  done: SpotifyApi.TrackObjectFull[];
 }
 
 interface Track {
@@ -39,6 +39,7 @@ export async function migrate(api: SpotifyWebApi) {
   let spinner = ora().start();
   for (let i = 0; i < localFiles.length; i++) {
     spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
+    // TODO: rate limiting
     const result = await api.searchTracks(localFiles[i]);
     const track = result.body.tracks?.items[0];
     const displayName = `${track?.artists[0].name} - ${track?.name}`;
