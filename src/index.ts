@@ -13,7 +13,7 @@ const clientSecret = process.env.CLIENT_SECRET;
 // URI must be whitelisted in Spotify API settings
 const redirectUri = `http://localhost:${port}/callback`;
 
-const localStorage = new LocalStorage("../credentials");
+const localStorage = new LocalStorage("../credentials2");
 
 const api = new SpotifyWebApi({
   clientId,
@@ -39,52 +39,69 @@ app.get("/callback", async (req, res) => {
 });
 app.listen(port);
 
-if (getTokenFromLocalStorage()) {
-  start();
-} else {
-  const authUrl = api.createAuthorizeURL(scopes, "whatever");
-  console.info(`🙋 Please allow this app to access your account:\n${authUrl}`);
-}
-
 async function getTokenFromCode(code: string) {
   const { body } = await api.authorizationCodeGrant(code);
-  const { access_token, refresh_token } = body;
+  const { access_token, refresh_token, expires_in } = body;
   localStorage.setItem("access_token", access_token);
   localStorage.setItem("refresh_token", refresh_token);
+  localStorage.setItem(
+    "expires_at",
+    (Date.now() + expires_in * 1000).toString()
+  );
   api.setAccessToken(access_token);
   api.setRefreshToken(refresh_token);
 }
 
-function getTokenFromLocalStorage(): boolean {
+async function getTokenFromLocalStorage(): Promise<boolean> {
   const accessToken = localStorage.getItem("access_token");
   const refreshToken = localStorage.getItem("refresh_token");
+  const expiresAt = localStorage.getItem("expires_at");
 
-  if (accessToken && refreshToken) {
-    console.info("🆗 Got credentials from local storage");
-    api.setAccessToken(accessToken);
+  if (refreshToken) {
     api.setRefreshToken(refreshToken);
-    return true;
+  } else {
+    return false;
   }
 
-  return false;
+  if (accessToken) {
+    api.setAccessToken(accessToken);
+    console.info("🆗 Got credentials from local storage");
+  }
+
+  if (!accessToken || parseInt(expiresAt || "0", 10) < Date.now()) {
+    const { body } = await api.refreshAccessToken();
+    const { access_token: newAccessToken, expires_in: expiresIn } = body;
+    localStorage.setItem("access_token", newAccessToken);
+    localStorage.setItem(
+      "expires_at",
+      (Date.now() + expiresIn * 1000).toString()
+    );
+    api.setAccessToken(newAccessToken);
+    api.setRefreshToken(refreshToken);
+    console.info("💧 Refreshed access token");
+  }
+
+  return true;
 }
 
 async function start() {
   try {
     await migrate(api);
   } catch (e) {
-    if (e.statusCode === 401) {
-      // Got "Unauthorized" response, access token has probably expired
-      const { body } = await api.refreshAccessToken();
-      const { access_token } = body;
-      localStorage.setItem("access_token", access_token);
-      api.setAccessToken(access_token);
-      console.info("💧 Refreshed access token");
-      start(); // restart
-    } else {
-      console.error(`\n🚨 An error occured: ${e.message}`);
-      console.error(e.stack);
-      process.exit(1);
-    }
+    console.error(`\n🚨 An error occured: ${e.message}`);
+    e.stack && console.error(e.stack);
+    process.exit(1);
   }
 }
+
+(async function init() {
+  const ready: boolean = await getTokenFromLocalStorage();
+  if (ready) {
+    start();
+  } else {
+    const authUrl = api.createAuthorizeURL(scopes, "whatever");
+    console.info(
+      `🙋 Please allow this app to access your account:\n${authUrl}`
+    );
+  }
+})();

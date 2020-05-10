@@ -23,8 +23,6 @@ interface Track {
 }
 
 export async function migrate(api: SpotifyWebApi) {
-  // TODO: check if access token is expired
-
   const localFiles = await getLocalFiles(process.env.LOCAL_DIR);
 
   const state: State = {
