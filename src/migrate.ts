@@ -53,6 +53,8 @@ export async function migrate(api: SpotifyWebApi) {
 
   await reportBeforeMigration(state);
 
+  // TODO add files to library
+
   console.info("✅ Done");
   process.exit(0);
 }
@@ -61,30 +63,45 @@ async function getLocalFiles(dirPath?: string): Promise<string[]> {
   if (dirPath === undefined) {
     throw new Error("No local directory specified");
   }
+
   const spinner = ora("Reading local files").start();
-  const result = await walk.async(path.resolve(dirPath), {
+  // TODO: support ignore glob
+  const allFiles = await walk.async(path.resolve(dirPath), {
     follow_symlinks: true,
   });
-  const files = await Promise.all(
-    result
-      .filter((filePath, index) => {
-        if (index > 100) return false; // TODO
-        const mimeType = mime.getType(filePath);
-        return mimeType && mimeType.startsWith("audio/");
-      })
-      .map(async (filePath) => {
-        const metaData = await musicMetadata.parseFile(filePath);
-        const { artist, title } = metaData.common;
-        if (!artist || !title) {
-          // Fallback to file name
-          const { name } = path.parse(filePath);
-          return name; // basename without extension
-        }
-        return `${artist} - ${title}`;
-      })
-  );
-  spinner.succeed();
-  return files;
+
+  let audioFiles: string[] = [];
+  for (const filePath of allFiles) {
+    spinner.text = `Reading ${audioFiles.length} local files`;
+
+    // Include only audio files
+    const mimeType = mime.getType(filePath);
+    if (!mimeType || !mimeType.startsWith("audio/")) {
+      continue;
+    }
+
+    // Try to get metadata
+    let metaData: musicMetadata.IAudioMetadata;
+    try {
+      metaData = await musicMetadata.parseFile(filePath);
+    } catch (e) {
+      // Fall back to file name
+      const { name } = path.parse(filePath);
+      audioFiles.push(name); // basename without extension
+      continue;
+    }
+    const { artist, title } = metaData.common;
+    if (!artist || !title) {
+      // Fall back to file name
+      const { name } = path.parse(filePath);
+      audioFiles.push(name); // basename without extension
+      continue;
+    }
+    audioFiles.push(`${artist} - ${title}`);
+  }
+
+  spinner.succeed(`Read ${audioFiles.length} local files`);
+  return audioFiles;
 }
 
 function isCorrectTrack(candidate: string, target: string): boolean {
