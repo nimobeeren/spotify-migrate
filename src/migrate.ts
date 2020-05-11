@@ -16,14 +16,6 @@ interface State {
   done: SpotifyApi.TrackObjectFull[];
 }
 
-interface Track {
-  id: string;
-  artists: Array<{
-    name: string;
-  }>;
-  name: string;
-}
-
 export async function migrate(api: SpotifyWebApi) {
   const state: State = {
     localFiles: [],
