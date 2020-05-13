@@ -1,5 +1,4 @@
 import path from "path";
-import compareStrings from "damerau-levenshtein";
 import glob from "fast-glob";
 import { prompt } from "inquirer";
 import _ from "lodash";
@@ -7,7 +6,7 @@ import mime from "mime";
 import * as musicMetadata from "music-metadata";
 import ora from "ora";
 import SpotifyWebApi from "spotify-web-api-node";
-import { safeRequest } from "./util";
+import { safeRequest, isCorrectTrack } from "./util";
 
 interface State {
   localFiles: string[];
@@ -128,12 +127,6 @@ async function getLocalFiles(dirPath?: string): Promise<string[]> {
 
   spinner.succeed(`Read ${audioFiles.length} local files`);
   return audioFiles;
-}
-
-function isCorrectTrack(candidate: string, target: string): boolean {
-  const threshold = 0.9;
-  const { similarity } = compareStrings(candidate, target) || {};
-  return similarity && similarity > threshold;
 }
 
 async function reportBeforeMigration(state: State) {

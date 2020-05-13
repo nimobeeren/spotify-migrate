@@ -1,3 +1,4 @@
+import compareStrings from "damerau-levenshtein";
 import wait from "waait";
 
 export async function safeRequest<T extends (...args: any) => Promise<any>>(
@@ -7,13 +8,17 @@ export async function safeRequest<T extends (...args: any) => Promise<any>>(
 ): Promise<ReturnType<T>> {
   await wait(delay);
   try {
-    console.log("Safe request");
     return await requestFunc();
   } catch (e) {
     if (retries > 0) {
-      "Retrying";
       return await safeRequest(requestFunc, delay * 2, retries - 1);
     }
     throw e;
   }
+}
+
+export function isCorrectTrack(candidate: string, target: string): boolean {
+  const threshold = 0.9;
+  const { similarity } = compareStrings(candidate, target) || {};
+  return similarity && similarity > threshold;
 }
