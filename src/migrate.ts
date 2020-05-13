@@ -29,7 +29,7 @@ export async function migrate(api: SpotifyWebApi) {
   state.localFiles = localFiles;
 
   let spinner = ora().start();
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < localFiles.length; i++) {
     spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
     const searchResult = await safeRequest(() =>
       api.searchTracks(localFiles[i])
@@ -93,6 +93,7 @@ async function getLocalFiles(dirPath?: string): Promise<string[]> {
   const allFiles = await glob("**/*", {
     cwd: path.resolve(dirPath),
     ignore: process.env.IGNORE_GLOB ? [process.env.IGNORE_GLOB] : [],
+    absolute: true,
   });
 
   let audioFiles: string[] = [];
