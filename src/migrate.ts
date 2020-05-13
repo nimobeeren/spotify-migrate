@@ -7,6 +7,7 @@ import mime from "mime";
 import * as musicMetadata from "music-metadata";
 import ora from "ora";
 import SpotifyWebApi from "spotify-web-api-node";
+import { safeRequest } from "./util";
 
 interface State {
   localFiles: string[];
@@ -29,11 +30,12 @@ export async function migrate(api: SpotifyWebApi) {
   state.localFiles = localFiles;
 
   let spinner = ora().start();
-  for (let i = 0; i < localFiles.length; i++) {
+  for (let i = 0; i < 50; i++) {
     spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
-    // TODO: rate limiting
-    const result = await api.searchTracks(localFiles[i]);
-    const track = result.body.tracks?.items[0];
+    const searchResult = await safeRequest(() =>
+      api.searchTracks(localFiles[i])
+    );
+    const track = searchResult.body.tracks?.items[0];
     const displayName = `${track?.artists[0].name} - ${track?.name}`;
 
     if (!track || !isCorrectTrack(displayName, localFiles[i])) {
@@ -41,8 +43,10 @@ export async function migrate(api: SpotifyWebApi) {
       continue;
     }
 
-    const exists = (await api.containsMySavedTracks([track.id])).body[0];
-    if (exists) {
+    const containsResult = await safeRequest(() =>
+      api.containsMySavedTracks([track.id])
+    );
+    if (containsResult.body[0]) {
       state.alreadyExists.push(displayName);
       continue;
     }
@@ -68,7 +72,9 @@ export async function migrate(api: SpotifyWebApi) {
   spinner = ora(`Migrating 0 of ${state.ready.length} tracks`).start();
   const trackChunks = _.chunk(state.ready, 50); // 50 tracks per request
   for (const trackChunk of trackChunks) {
-    api.addToMySavedTracks(trackChunk.map((track) => track.id));
+    await safeRequest(() =>
+      api.addToMySavedTracks(trackChunk.map((track) => track.id))
+    );
     state.done.push(...trackChunk);
     spinner.text = `Migrating ${state.done.length} of ${state.ready.length} tracks`;
   }
