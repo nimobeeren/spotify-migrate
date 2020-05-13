@@ -65,7 +65,7 @@ export async function migrate(api: CustomSpotifyWebApi) {
     name: "cont",
     type: "confirm",
     message: "Continue?",
-    default: false,
+    default: true,
   });
 
   if (!cont) {
@@ -153,7 +153,7 @@ async function reportBeforeMigration(state: State) {
     name: "showList",
     type: "confirm",
     message: "List files before migrating?",
-    default: false,
+    default: true,
   });
   if (showList) {
     if (state.notAvailable.length > 0) {
@@ -194,7 +194,7 @@ async function reportAfterMigration(state: State) {
     name: "showDetails",
     type: "confirm",
     message: "Show detailed results?",
-    default: false,
+    default: true,
   });
   if (showDetails) {
     if (state.notAvailable.length > 0) {
