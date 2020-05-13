@@ -29,7 +29,7 @@ export async function migrate(api: CustomSpotifyWebApi) {
   state.localFiles = localFiles;
 
   let spinner = ora().start();
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < localFiles.length; i++) {
     spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
 
     const searchQuery = getSearchQuery(localFiles[i]);
@@ -84,7 +84,8 @@ export async function migrate(api: CustomSpotifyWebApi) {
   }
 
   spinner.succeed(`Migrated ${state.done.length} tracks`);
-  // TODO: report
+
+  await reportAfterMigration(state);
 
   process.exit(0);
 }
@@ -140,7 +141,7 @@ async function reportBeforeMigration(state: State) {
     console.info(`❌ ${state.notAvailable.length} tracks not available`);
   }
   if (state.alreadyExists.length > 0) {
-    console.info(`⏭ ${state.alreadyExists.length} tracks already exist`);
+    console.info(`🔎 ${state.alreadyExists.length} tracks already exist`);
   }
   if (state.ready.length > 0) {
     console.info(`🔜 ${state.ready.length} tracks ready to be migrated`);
@@ -162,7 +163,7 @@ async function reportBeforeMigration(state: State) {
       }
     }
     if (state.alreadyExists.length > 0) {
-      console.info("⏭ Already existing tracks:");
+      console.info("🔎 Already existing tracks:");
       for (const trackName of state.alreadyExists) {
         console.info(`* ${trackName}`);
       }
@@ -170,6 +171,47 @@ async function reportBeforeMigration(state: State) {
     if (state.ready.length > 0) {
       console.info("🔜 Tracks ready to be migrated:");
       for (const track of state.ready) {
+        console.info(`* ${track.artists[0].name} - ${track.name}`);
+      }
+    }
+  }
+}
+
+async function reportAfterMigration(state: State) {
+  if (state.notAvailable.length > 0) {
+    console.info(`❌ ${state.notAvailable.length} tracks were not available`);
+  }
+  if (state.alreadyExists.length > 0) {
+    console.info(`🔎 ${state.alreadyExists.length} tracks already existed`);
+  }
+  if (state.done.length > 0) {
+    console.info(`✅ ${state.ready.length} tracks succesfully migrated`);
+  } else {
+    console.info(`🔚 no tracks migrated`);
+  }
+
+  const { showDetails } = await prompt({
+    name: "showDetails",
+    type: "confirm",
+    message: "Show detailed results?",
+    default: false,
+  });
+  if (showDetails) {
+    if (state.notAvailable.length > 0) {
+      console.info("❌ Unavailable tracks:");
+      for (const trackName of state.notAvailable) {
+        console.info(`* ${trackName}`);
+      }
+    }
+    if (state.alreadyExists.length > 0) {
+      console.info("🔎 Already existing tracks:");
+      for (const trackName of state.alreadyExists) {
+        console.info(`* ${trackName}`);
+      }
+    }
+    if (state.ready.length > 0) {
+      console.info("✅ Succesfully migrated tracks:");
+      for (const track of state.done) {
         console.info(`* ${track.artists[0].name} - ${track.name}`);
       }
     }
