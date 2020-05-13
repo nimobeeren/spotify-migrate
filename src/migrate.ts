@@ -5,8 +5,8 @@ import _ from "lodash";
 import mime from "mime";
 import * as musicMetadata from "music-metadata";
 import ora from "ora";
-import SpotifyWebApi from "spotify-web-api-node";
-import { safeRequest, isCorrectTrack, getSearchQuery } from "./util";
+import CustomSpotifyWebApi from "./api";
+import { isCorrectTrack, getSearchQuery } from "./util";
 
 interface State {
   localFiles: string[];
@@ -16,7 +16,7 @@ interface State {
   done: SpotifyApi.TrackObjectFull[];
 }
 
-export async function migrate(api: SpotifyWebApi) {
+export async function migrate(api: CustomSpotifyWebApi) {
   const state: State = {
     localFiles: [],
     notAvailable: [],
@@ -33,7 +33,9 @@ export async function migrate(api: SpotifyWebApi) {
     spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
 
     const searchQuery = getSearchQuery(localFiles[i]);
-    const searchResult = await safeRequest(() => api.searchTracks(searchQuery));
+    const searchResult = await api.safeRequest(() =>
+      api.searchTracks(searchQuery)
+    );
     const track = searchResult.body.tracks?.items[0];
     const displayName = `${track?.artists[0].name} - ${track?.name}`;
 
@@ -42,7 +44,7 @@ export async function migrate(api: SpotifyWebApi) {
       continue;
     }
 
-    const containsResult = await safeRequest(() =>
+    const containsResult = await api.safeRequest(() =>
       api.containsMySavedTracks([track.id])
     );
     if (containsResult.body[0]) {
@@ -71,7 +73,7 @@ export async function migrate(api: SpotifyWebApi) {
   spinner = ora(`Migrating 0 of ${state.ready.length} tracks`).start();
   const trackChunks = _.chunk(state.ready, 50); // 50 tracks per request
   for (const trackChunk of trackChunks) {
-    await safeRequest(() =>
+    await api.safeRequest(() =>
       api.addToMySavedTracks(trackChunk.map((track) => track.id))
     );
     state.done.push(...trackChunk);

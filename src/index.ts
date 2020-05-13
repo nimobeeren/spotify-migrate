@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
-import SpotifyWebApi from "spotify-web-api-node";
 import { LocalStorage } from "node-localstorage";
+import SpotifyWebApi from "./api";
 import { migrate } from "./migrate";
 
 dotenv.config();
@@ -13,7 +13,7 @@ const clientSecret = process.env.CLIENT_SECRET;
 // URI must be whitelisted in Spotify API settings
 const redirectUri = `http://localhost:${port}/callback`;
 
-const localStorage = new LocalStorage("../credentials2");
+const localStorage = new LocalStorage("../credentials");
 
 const api = new SpotifyWebApi({
   clientId,
