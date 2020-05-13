@@ -25,12 +25,6 @@ export function isCorrectTrack(candidate: string, target: string): boolean {
     return true;
   }
 
-  target = target.replace(/\((feat|ft).*\)/i, "").trim();
-  result = compareStrings(candidate, target) || {};
-  if (result?.similarity > threshold) {
-    return true;
-  }
-
   candidate = candidate.replace(/- \w+ mix/i, "").trim();
   result = compareStrings(candidate, target) || {};
   if (result?.similarity > threshold) {
@@ -38,4 +32,11 @@ export function isCorrectTrack(candidate: string, target: string): boolean {
   }
 
   return false;
+}
+
+export function getSearchQuery(origQuery: string) {
+  let query = origQuery.replace(/(ft|feat)[^\)]+/i, "");
+  query = query.replace("()", "");
+  query = query.replace(/\((.+)\)/, "- $1");
+  return query;
 }

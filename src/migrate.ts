@@ -6,7 +6,7 @@ import mime from "mime";
 import * as musicMetadata from "music-metadata";
 import ora from "ora";
 import SpotifyWebApi from "spotify-web-api-node";
-import { safeRequest, isCorrectTrack } from "./util";
+import { safeRequest, isCorrectTrack, getSearchQuery } from "./util";
 
 interface State {
   localFiles: string[];
@@ -31,14 +31,14 @@ export async function migrate(api: SpotifyWebApi) {
   let spinner = ora().start();
   for (let i = 0; i < localFiles.length; i++) {
     spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
-    const searchResult = await safeRequest(() =>
-      api.searchTracks(localFiles[i])
-    );
+
+    const searchQuery = getSearchQuery(localFiles[i]);
+    const searchResult = await safeRequest(() => api.searchTracks(searchQuery));
     const track = searchResult.body.tracks?.items[0];
     const displayName = `${track?.artists[0].name} - ${track?.name}`;
 
-    if (!track || !isCorrectTrack(displayName, localFiles[i])) {
-      state.notAvailable.push(localFiles[i]);
+    if (!track || !isCorrectTrack(displayName, searchQuery)) {
+      state.notAvailable.push(searchQuery);
       continue;
     }
 
