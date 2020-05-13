@@ -11,6 +11,10 @@ export default class CustomSpotifyWebApi extends SpotifyWebApi {
     try {
       return await requestFunc();
     } catch (e) {
+      if (e.statusCode === 401) {
+        console.info("\n💧 Refreshed access token");
+        await this.refreshAccessToken();
+      }
       if (retries > 0) {
         return await this.safeRequest(requestFunc, delay * 2, retries - 1);
       }
