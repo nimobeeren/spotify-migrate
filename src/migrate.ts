@@ -34,25 +34,28 @@ export async function migrate(api: CustomSpotifyWebApi) {
 
     const searchQuery = getSearchQuery(localFiles[i]);
     const searchResult = await api.safeRequest(() =>
-      api.searchTracks(searchQuery)
+      api.searchTracks(searchQuery, { limit: 3 })
     );
-    const track = searchResult.body.tracks?.items[0];
-    const displayName = `${track?.artists[0].name} - ${track?.name}`;
+    const resultTrack = searchResult.body.tracks?.items?.find((track) => {
+      const displayName = `${track.artists[0].name} - ${track.name}`;
+      return track && isCorrectTrack(displayName, searchQuery);
+    });
 
-    if (!track || !isCorrectTrack(displayName, searchQuery)) {
+    if (!resultTrack) {
       state.notAvailable.push(searchQuery);
       continue;
     }
 
     const containsResult = await api.safeRequest(() =>
-      api.containsMySavedTracks([track.id])
+      api.containsMySavedTracks([resultTrack.id])
     );
     if (containsResult.body[0]) {
+      const displayName = `${resultTrack.artists[0].name} - ${resultTrack.name}`;
       state.alreadyExists.push(displayName);
       continue;
     }
 
-    state.ready.push(track);
+    state.ready.push(resultTrack);
   }
   spinner.succeed(`Searched for ${localFiles.length} tracks`);
 
