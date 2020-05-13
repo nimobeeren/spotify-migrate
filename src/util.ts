@@ -14,12 +14,20 @@ export function isCorrectTrack(candidate: string, target: string): boolean {
     return true;
   }
 
+  candidate = candidate.replace(/(ft|feat)[^-\(\)]+/i, "").trim();
+  candidate = candidate.replace("()", "").trim();
+  result = compareStrings(candidate, target) || {};
+  if (result?.similarity > threshold) {
+    return true;
+  }
+
   return false;
 }
 
 export function getSearchQuery(origQuery: string) {
-  let query = origQuery.replace(/(ft|feat)[^\)]+/i, "");
+  let query = origQuery.replace(/(ft|feat)[^-\(\)]+/i, "");
   query = query.replace("()", "");
   query = query.replace(/\((.+)\)/, "- $1");
-  return query;
+  query = query.replace(/&.*?-/, "-");
+  return query.trim();
 }

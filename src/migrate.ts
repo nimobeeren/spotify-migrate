@@ -29,7 +29,7 @@ export async function migrate(api: CustomSpotifyWebApi) {
   state.localFiles = localFiles;
 
   let spinner = ora().start();
-  for (let i = 0; i < localFiles.length; i++) {
+  for (let i = 0; i < 100; i++) {
     spinner.text = `Searching for ${i} of ${localFiles.length} tracks`;
 
     const searchQuery = getSearchQuery(localFiles[i]);
