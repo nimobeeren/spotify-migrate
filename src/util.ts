@@ -3,6 +3,10 @@ import compareStrings from "damerau-levenshtein";
 export function isCorrectTrack(candidate: string, target: string): boolean {
   const threshold = 0.8;
 
+  // Comparison is case-insensitive
+  candidate = candidate.toLowerCase();
+  target = target.toLowerCase();
+
   let result = compareStrings(candidate, target) || {};
   if (result?.similarity > threshold) {
     return true;
