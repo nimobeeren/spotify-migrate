@@ -47,10 +47,11 @@ Examples: `"*.flac"` or `"Guilty pleasures/**/*"`
 
 I've used this script to migrate my own music library of ~2,000 tracks of mostly Drum & Bass and some semi-popular electronic music found on YouTube channels such as MrSuicideSheep. To give you an idea of the practical use of this script, I've summarized my own results. Of course, Your Mileage May Vary.
 
-Total tracks: 2,007
-Succesfully migrated: 1,469
-Found manually: 280
-Not available: 258
+| Total tracks         | 2,007 |
+| -------------------- | ----: |
+| Succesfully migrated | 1,469 |
+| Found manually       |   280 |
+| Not available        |   258 |
 
 Considering only tracks that are available on Spotify, that gives a success rate of `1,469 / (1,469 + 280) = 84%`. So far I've found no false positives. Since this test, I've worked on the algorithm a bit more, so I would expect it to do slightly better on the same dataset.
 
