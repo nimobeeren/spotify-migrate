@@ -48,7 +48,7 @@ Examples: `"*.flac"` or `"Guilty pleasures/**/*"`
 I've used this script to migrate my own music library of ~2,000 tracks of mostly Drum & Bass and some semi-popular electronic music found on YouTube channels such as MrSuicideSheep. To give you an idea of the practical use of this script, I've summarized my own results. Of course, Your Mileage May Vary.
 
 | Total tracks         | 2,007 |
-| -------------------- | ----: |
+| :------------------- | ----: |
 | Succesfully migrated | 1,469 |
 | Found manually       |   280 |
 | Not available        |   258 |
