@@ -32,6 +32,6 @@ export function getSearchQuery(origQuery: string) {
   let query = origQuery.replace(/(ft|feat)[^-\(\)]+/i, "");
   query = query.replace("()", "");
   query = query.replace(/\((.+)\)/, "- $1");
-  query = query.replace(/&.*?-/, "-");
+  query = query.replace(/\B&\B|\bx\b/gi, "");
   return query.trim();
 }
