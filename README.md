@@ -12,9 +12,9 @@ It works by reading metadata (falling back to filenames) of your local music fil
 ## Usage
 
 1. Clone or download the repo
-2. `yarn install`
+2. `npm install`
 3. Configure your `.env` file (see [Configuration](#configuration))
-4. `yarn start`
+4. `npm start`
 5. The first time you run the script, you will be asked to log in to Spotify. You'll only need to do this once.
 
 ## Configuration
