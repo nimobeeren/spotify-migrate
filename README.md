@@ -5,6 +5,7 @@
 It's a script that migrates your local music files to Spotify. My main motivations for making this (as opposed to simply adding the local files to Spotify):
 
 - Spotify has better audio quality than most files I have
+- Spotify automatically syncs music
 - Spotify has more consistent naming of tracks/artists
 
 It works by reading metadata (falling back to filenames) of your local music files, searching for them on Spotify and adding them to your liked songs.
