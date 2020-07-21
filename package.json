@@ -22,7 +22,7 @@
     "express": "^4.17.1",
     "fast-glob": "^3.2.2",
     "inquirer": "^7.1.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mime": "^2.4.5",
     "music-metadata": "^6.3.7",
     "node-localstorage": "^2.1.6",
